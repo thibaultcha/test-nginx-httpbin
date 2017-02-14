@@ -7,6 +7,8 @@ use Test::Nginx::Socket -base;
 our $VERSION = '0.01';
 
 our $UseHttpbin = $ENV{TEST_NGINX_USE_HTTPBIN} || 0;
+our $HttpbinPort = $ENV{TEST_NGINX_HTTPBIN_PORT} || 9000;
+our $HttpbinHost = $ENV{TEST_NGINX_HTTPBIN_HOST} || 'httpbin.org';
 
 my $httpbin_conf = do { local $/; <DATA> };
 
@@ -32,6 +34,10 @@ sub inject_httpbin {
             $http_config = '';
         }
 
+        local $HttpbinPort = $HttpbinPort;
+
+        $httpbin_conf =~ s/(\$\w+)/$1/eeg;
+
         $block->set_value('http_config' => qq{
             $http_config
             $httpbin_conf
@@ -48,8 +54,8 @@ add_block_preprocessor(\&inject_httpbin);
 1;
 __DATA__
 server {
-    listen 9000;
-    server_name httpbin.org;
+    listen $HttpbinPort;
+    server_name $HttpbinHost;
 
     location /get {
         return 200;
