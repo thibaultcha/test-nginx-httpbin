@@ -57,7 +57,33 @@ server {
     listen $HttpbinPort;
     server_name $HttpbinHost;
 
-    location /get {
-        return 200;
+    location = /get {
+        access_by_lua_block {
+            if ngx.req.get_method() ~= "GET" then
+                ngx.status = ngx.HTTP_NOT_ALLOWED
+                ngx.say("The method is not allowed for the requested URL")
+                return ngx.exit(ngx.HTTP_NOT_ALLOWED)
+            end
+        }
+
+        content_by_lua_block {
+            local cjson = require "cjson"
+
+            local headers = ngx.req.get_headers()
+            local origin = ngx.var.remote_addr
+            local args = ngx.req.get_uri_args()
+            local url = string.format("%s://%s%s", ngx.var.scheme,
+                                                   ngx.var.host,
+                                                   ngx.var.request_uri)
+
+            local t     = {
+                url     = url,
+                args    = args,
+                origin  = origin,
+                headers = headers,
+            }
+
+            ngx.say(cjson.encode(t))
+        }
     }
 }
