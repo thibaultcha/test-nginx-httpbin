@@ -9,11 +9,17 @@ our $VERSION = '0.01';
 our $UseHttpbin = $ENV{TEST_NGINX_USE_HTTPBIN} || 0;
 our $HttpbinPort = $ENV{TEST_NGINX_HTTPBIN_PORT} || 9000;
 our $HttpbinHost = $ENV{TEST_NGINX_HTTPBIN_HOST} || 'httpbin.org';
+our $HttpbinInstances = $ENV{TEST_NGINX_HTTPBIN_INSTANCES} || 1;
 
-my $httpbin_conf = do { local $/; <DATA> };
+my $httpbin_conf_template = do { local $/; <DATA> };
 
 sub httpbin {
     $UseHttpbin = 1;
+
+    my $n = shift;
+    if (defined $n && $n > 0) {
+        $HttpbinInstances = $n;
+    }
 }
 
 sub inject_httpbin {
@@ -28,20 +34,24 @@ sub inject_httpbin {
     }
 
     if ($UseHttpbin) {
-        my $http_config = $block->http_config;
-
-        if (!defined $http_config) {
-            $http_config = '';
-        }
-
         local $HttpbinPort = $HttpbinPort;
 
-        $httpbin_conf =~ s/(\$\w+)/$1/eeg;
+        for my $i (0..$HttpbinInstances - 1) {
+            my $httpbin_conf = $httpbin_conf_template;
+            my $HttpbinPort = $HttpbinPort + $i;
 
-        $block->set_value('http_config' => qq{
-            $http_config
-            $httpbin_conf
-        });
+            my $http_config = $block->http_config;
+            if (!defined $http_config) {
+                $http_config = '';
+            }
+
+            $httpbin_conf =~ s/(\$\w+)/$1/eeg;
+
+            $block->set_value('http_config' => qq{
+                $http_config
+                $httpbin_conf
+            });
+        }
     }
 }
 
