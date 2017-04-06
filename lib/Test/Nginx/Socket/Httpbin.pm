@@ -222,7 +222,7 @@ server {
       \_     _/
         `"""`]]
 
-                ngx.header["x-more-info"] = "http://tools.ietf.org/html/rfc2324"
+                ngx.header["X-More-Info"] = "http://tools.ietf.org/html/rfc2324"
                 ngx.header["Content-Length"] = #teapot + 1
                 ngx.header["Content-Type"] = nil
                 ngx.say(teapot)
