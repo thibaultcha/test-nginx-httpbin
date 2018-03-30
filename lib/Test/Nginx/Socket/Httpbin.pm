@@ -31,6 +31,11 @@ sub inject_httpbin {
 
     } elsif (defined $block->httpbin) {
         $UseHttpbin = 1;
+
+        my $n = $block->httpbin;
+        if (defined $n && $n =~ /^\d+?$/ && $n > 0) {
+            $HttpbinInstances = $n;
+        }
     }
 
     if ($UseHttpbin) {
